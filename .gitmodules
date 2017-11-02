@@ -1,0 +1,12 @@
+[submodule "src/third_party/concurrentqueue"]
+	path = src/third_party/concurrentqueue
+	url = https://github.com/cameron314/concurrentqueue.git
+[submodule "src/third_party/folly"]
+	path = src/third_party/folly
+	url = https://github.com/facebook/folly.git
+[submodule "src/third_party/libcds"]
+	path = src/third_party/libcds
+	url = https://github.com/khizmax/libcds.git
+[submodule "src/third_party/MPMCQueue"]
+	path = src/third_party/MPMCQueue
+	url = https://github.com/rigtorp/MPMCQueue.git
