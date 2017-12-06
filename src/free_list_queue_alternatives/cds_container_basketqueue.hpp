@@ -1,6 +1,7 @@
 #ifndef ZERO_DETAILS_EVALUATION_CDS_CONTAINER_BASKETQUEUE_HPP
 #define ZERO_DETAILS_EVALUATION_CDS_CONTAINER_BASKETQUEUE_HPP
 
+#include "free_list.hpp"
 #include "config.hpp"
 #include "helper_functions.hpp"
 
@@ -8,10 +9,21 @@
 #include <cds/opt/options.h>
 #include <cds/container/basket_queue.h>
 
-namespace _cds_container_basketqueue {
+class CDSContainerBasketQueue : public FreeList {
+private:
+    cds::container::BasketQueue<cds::gc::HP, uint_fast32_t>*    _freelist;
+    std::atomic<uint_fast32_t>                                  _approx_freelist_length;
 
-    cds::container::BasketQueue<cds::gc::HP, uint_fast32_t>* _freelist;
-    std::atomic<uint_fast32_t> _approx_freelist_length;
+public:
+    CDSContainerBasketQueue() {
+        cds::threading::Manager::attachThread();
+        _freelist = new cds::container::BasketQueue<cds::gc::HP, uint_fast32_t>;
+        for (uint_fast32_t i = 1; i < block_count; i++) {
+            _freelist->enqueue(i);
+            _approx_freelist_length++;
+        }
+        cds::threading::Manager::detachThread();
+    };
 
     // http://libcds.sourceforge.net/doc/cds-api/classcds_1_1container_1_1_basket_queue.html
     void use(std::array<uint_fast32_t, block_count>& pageIDs, std::array<std::atomic_flag, block_count>& pageUnused) {
@@ -39,18 +51,12 @@ namespace _cds_container_basketqueue {
                 }
             }
         }
-    }
+    };
 
-    void init(const uint_fast32_t& block_count) {
-        cds::threading::Manager::attachThread();
-        _freelist = new cds::container::BasketQueue<cds::gc::HP, uint_fast32_t>;
-        for (uint_fast32_t i = 1; i < block_count; i++) {
-            _freelist->enqueue(i);
-            _approx_freelist_length++;
-        }
-        cds::threading::Manager::detachThread();
-    }
+    bool useCDSThreadManagement() {
+        return true;
+    };
 
-}
+};
 
 #endif //ZERO_DETAILS_EVALUATION_CDS_CONTAINER_BASKETQUEUE_HPP

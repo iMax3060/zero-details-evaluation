@@ -1,14 +1,23 @@
 #ifndef ZERO_DETAILS_EVALUATION_TBB_CONCURRENT_BOUNDED_QUEUE_HPP
 #define ZERO_DETAILS_EVALUATION_TBB_CONCURRENT_BOUNDED_QUEUE_HPP
 
+#include "free_list.hpp"
 #include "config.hpp"
 #include "helper_functions.hpp"
 
 #include <tbb/concurrent_queue.h>
 
-namespace _tbb_concurrent_bounded_queue {
+class TBBConcurrentBoundedQueue : public FreeList {
+private:
+    tbb::concurrent_bounded_queue<uint_fast32_t>    _freelist;
 
-    tbb::concurrent_bounded_queue<uint_fast32_t> _freelist;
+public:
+    TBBConcurrentBoundedQueue() {
+        _freelist.set_capacity(block_count - 1);
+        for (uint_fast32_t i = 1; i < block_count; i++) {
+            _freelist.push(i);
+        }
+    };
 
     // https://software.intel.com/en-us/node/506201
     void use(std::array<uint_fast32_t, block_count>& pageIDs, std::array<std::atomic_flag, block_count>& pageUnused) {
@@ -38,15 +47,8 @@ namespace _tbb_concurrent_bounded_queue {
                 }
             }
         }
-    }
+    };
 
-    void init(const uint_fast32_t& block_count) {
-        _freelist.set_capacity(block_count - 1);
-        for (uint_fast32_t i = 1; i < block_count; i++) {
-            _freelist.push(i);
-        }
-    }
-
-}
+};
 
 #endif //ZERO_DETAILS_EVALUATION_TBB_CONCURRENT_BOUNDED_QUEUE_HPP

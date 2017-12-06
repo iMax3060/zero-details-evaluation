@@ -1,14 +1,22 @@
 #ifndef ZERO_DETAILS_EVALUATION_FOLLY_MPMCQUEUE_HPP
 #define ZERO_DETAILS_EVALUATION_FOLLY_MPMCQUEUE_HPP
 
+#include "free_list.hpp"
 #include "config.hpp"
 #include "helper_functions.hpp"
 
 #include <folly/MPMCQueue.h>
 
-namespace _folly_mpmcqueue {
+class FollyMPMCQueue : public FreeList {
+private:
+    folly::MPMCQueue<uint_fast32_t> _freelist;
 
-    folly::MPMCQueue<uint_fast32_t> _freelist(block_count - 1);
+public:
+    FollyMPMCQueue() : _freelist(block_count - 1) {
+        for (uint_fast32_t i = 1; i < block_count; i++) {
+            _freelist.writeIfNotFull(i);
+        }
+    };
 
     // https://github.com/facebook/folly
     void use(std::array<uint_fast32_t, block_count>& pageIDs, std::array<std::atomic_flag, block_count>& pageUnused) {
@@ -38,14 +46,8 @@ namespace _folly_mpmcqueue {
                 }
             }
         }
-    }
+    };
 
-    void init(const uint_fast32_t& block_count) {
-        for (uint_fast32_t i = 1; i < block_count; i++) {
-            _freelist.writeIfNotFull(i);
-        }
-    }
-
-}
+};
 
 #endif //ZERO_DETAILS_EVALUATION_FOLLY_MPMCQUEUE_HPP

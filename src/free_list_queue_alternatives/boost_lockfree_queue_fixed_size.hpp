@@ -1,16 +1,25 @@
 #ifndef ZERO_DETAILS_EVALUATION_BOOST_LOCKFREE_QUEUE_FIXED_SIZE_HPP
 #define ZERO_DETAILS_EVALUATION_BOOST_LOCKFREE_QUEUE_FIXED_SIZE_HPP
 
+#include "free_list.hpp"
 #include "config.hpp"
 #include "helper_functions.hpp"
 
 #include <atomic>
 #include <boost/lockfree/queue.hpp>
 
-namespace _boost_lockfree_queue_fixed_size {
+class BoostLockfreeQueueFixedSize : public FreeList {
+private:
+    boost::lockfree::queue<uint_fast32_t, boost::lockfree::capacity<block_count - 1>>   _freelist;
+    std::atomic<uint_fast32_t>                                                          _approx_freelist_length;
 
-    boost::lockfree::queue<uint_fast32_t, boost::lockfree::capacity<block_count - 1>> _freelist;
-    std::atomic<uint_fast32_t> _approx_freelist_length;
+public:
+    BoostLockfreeQueueFixedSize() {
+        for (uint_fast32_t i = 1; i < block_count; i++) {
+            _freelist.push(i);
+            _approx_freelist_length++;
+        }
+    };
 
     // http://www.boost.org/doc/libs/1_63_0/doc/html/lockfree.html#lockfree.introduction___motivation.data_structure_configuration
     void use(std::array<uint_fast32_t, block_count>& pageIDs, std::array<std::atomic_flag, block_count>& pageUnused) {
@@ -37,15 +46,8 @@ namespace _boost_lockfree_queue_fixed_size {
                 }
             }
         }
-    }
+    };
 
-    void init(const uint_fast32_t& block_count) {
-        for (uint_fast32_t i = 1; i < block_count; i++) {
-            _freelist.push(i);
-            _approx_freelist_length++;
-        }
-    }
-
-}
+};
 
 #endif //ZERO_DETAILS_EVALUATION_BOOST_LOCKFREE_QUEUE_FIXED_SIZE_HPP

@@ -1,14 +1,22 @@
 #ifndef ZERO_DETAILS_EVALUATION_CDS_CONTAINER_FCQUEUE_HPP
 #define ZERO_DETAILS_EVALUATION_CDS_CONTAINER_FCQUEUE_HPP
 
+#include "free_list.hpp"
 #include "config.hpp"
 #include "helper_functions.hpp"
 
 #include <cds/container/fcqueue.h>
 
-namespace _cds_container_fcqueue {
+class CDSContainerFCQueue : public FreeList {
+private:
+    cds::container::FCQueue<uint_fast32_t>  _freelist;
 
-    cds::container::FCQueue<uint_fast32_t> _freelist;
+public:
+    CDSContainerFCQueue() {
+        for (uint_fast32_t i = 1; i < block_count; i++) {
+            _freelist.enqueue(i);
+        }
+    };
 
     // http://libcds.sourceforge.net/doc/cds-api/classcds_1_1container_1_1_f_c_queue.html
     void use(std::array<uint_fast32_t, block_count>& pageIDs, std::array<std::atomic_flag, block_count>& pageUnused) {
@@ -33,14 +41,8 @@ namespace _cds_container_fcqueue {
                 }
             }
         }
-    }
+    };
 
-    void init(const uint_fast32_t& block_count) {
-        for (uint_fast32_t i = 1; i < block_count; i++) {
-            _freelist.enqueue(i);
-        }
-    }
-
-}
+};
 
 #endif //ZERO_DETAILS_EVALUATION_CDS_CONTAINER_FCQUEUE_HPP

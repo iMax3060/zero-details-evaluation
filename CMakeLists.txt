@@ -15,6 +15,7 @@ MESSAGE(STATUS)
 
 # No reason to set CMAKE_CONFIGURATION_TYPES if it's not a multiconfig generator
 # Also no reason mess with CMAKE_BUILD_TYPE if it's a multiconfig generator.
+SET(DEFAULT_BUILD_TYPE "Release")
 IF(CMAKE_CONFIGURATION_TYPES) # multiconfig generator?
     SET(CMAKE_CONFIGURATION_TYPES "Release" CACHE STRING "" FORCE)
 ELSE(CMAKE_CONFIGURATION_TYPES)
@@ -77,12 +78,12 @@ ELSE("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
     MESSAGE(AUTHOR_WARNING "The C++-Compiler is neither Clang, GCC nor ICPC so some compiler-specific flags cannot be set.")
 ENDIF("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 
-ADD_EXECUTABLE(free_list_queue_alternatives ${CMAKE_SOURCE_DIR}/src/free_list_queue_alternatives/main.cpp)
+ADD_EXECUTABLE(free_list_queue_alternatives ${CMAKE_SOURCE_DIR}/src/free_list_queue_alternatives/free_list_queue_alternatives.cpp)
 
 TARGET_LINK_LIBRARIES(free_list_queue_alternatives
-                          Threads::Threads
-                          ${Boost_LIBRARIES}
-                          LibCDS::LibCDS
-                          tbb
-                          Folly::Folly
-                          glog)
+                      Threads::Threads
+                      ${Boost_LIBRARIES}
+                      LibCDS::LibCDS
+                      tbb
+                      Folly::Folly
+                      glog)

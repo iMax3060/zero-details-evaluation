@@ -1,6 +1,7 @@
 #ifndef ZERO_DETAILS_EVALUATION_MPMC_BOUNDED_QUEUE_T_HPP
 #define ZERO_DETAILS_EVALUATION_MPMC_BOUNDED_QUEUE_T_HPP
 
+#include "free_list.hpp"
 #include "config.hpp"
 #include "helper_functions.hpp"
 
@@ -8,10 +9,18 @@
 #include "queues/include/mpmc-bounded-queue.hpp"
 #include "mpmc_bounded_queue.h"
 
-namespace _mpmc_bounded_queue_t {
+class MPMCBoundedQueueT : public FreeList {
+private:
+    mpmc_bounded_queue_t<uint_fast32_t> _freelist;
+    std::atomic<uint_fast32_t>          _approx_freelist_length;
 
-    mpmc_bounded_queue_t<uint_fast32_t> _freelist(nextPowerOfTwo64(block_count - 1));
-    std::atomic<uint_fast32_t> _approx_freelist_length;
+public:
+    MPMCBoundedQueueT() : _freelist(nextPowerOfTwo64(block_count - 1)) {
+        for (uint_fast32_t i = 1; i < block_count; i++) {
+            _freelist.enqueue(i);
+            _approx_freelist_length++;
+        }
+    };
 
     // https://github.com/mstump/queues
     void use(std::array<uint_fast32_t, block_count>& pageIDs, std::array<std::atomic_flag, block_count>& pageUnused) {
@@ -39,15 +48,8 @@ namespace _mpmc_bounded_queue_t {
                 }
             }
         }
-    }
+    };
 
-    void init(const uint_fast32_t& block_count) {
-        for (uint_fast32_t i = 1; i < block_count; i++) {
-            _freelist.enqueue(i);
-            _approx_freelist_length++;
-        }
-    }
-
-}
+};
 
 #endif //ZERO_DETAILS_EVALUATION_MPMC_BOUNDED_QUEUE_T_HPP

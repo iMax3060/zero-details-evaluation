@@ -1,16 +1,25 @@
 #ifndef ZERO_DETAILS_EVALUATION_RIGTORP_MPMCQUEUE_HPP
 #define ZERO_DETAILS_EVALUATION_RIGTORP_MPMCQUEUE_HPP
 
+#include "free_list.hpp"
 #include "config.hpp"
 #include "helper_functions.hpp"
 
 #include <atomic>
 #include "MPMCQueue/MPMCQueue.h"
 
-namespace _rigtrop_mpmcqueue {
+class RigtorpMPMCQueue : public FreeList {
+private:
+    rigtorp::MPMCQueue<uint_fast32_t>   _freelist;
+    std::atomic<uint_fast32_t>          _approx_freelist_length;
 
-    rigtorp::MPMCQueue<uint_fast32_t> _freelist(block_count - 1);
-    std::atomic<uint_fast32_t> _approx_freelist_length;
+public:
+    RigtorpMPMCQueue() : _freelist(block_count - 1) {
+        for (uint_fast32_t i = 1; i < block_count; i++) {
+            _freelist.push(i);
+            _approx_freelist_length++;
+        }
+    };
 
     // https://github.com/rigtorp/MPMCQueue
     void use(std::array<uint_fast32_t, block_count>& pageIDs, std::array<std::atomic_flag, block_count>& pageUnused) {
@@ -38,15 +47,8 @@ namespace _rigtrop_mpmcqueue {
                 }
             }
         }
-    }
+    };
 
-    void init(const uint_fast32_t& block_count) {
-        for (uint_fast32_t i = 1; i < block_count; i++) {
-            _freelist.push(i);
-            _approx_freelist_length++;
-        }
-    }
-
-}
+};
 
 #endif //ZERO_DETAILS_EVALUATION_RIGTORP_MPMCQUEUE_HPP

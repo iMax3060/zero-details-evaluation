@@ -1,16 +1,27 @@
 #ifndef ZERO_DETAILS_EVALUATION_LEGACY_ZERO_STACK_HPP
 #define ZERO_DETAILS_EVALUATION_LEGACY_ZERO_STACK_HPP
 
+#include "free_list.hpp"
 #include "config.hpp"
 #include "helper_functions.hpp"
 
 #include "tatas.h"
 
-namespace _legacy_zero_stack {
+class LegacyZeroStack : public FreeList {
+private:
+    uint_fast32_t   _freelist[block_count];
+    uint_fast32_t   _approx_freelist_length;
+    tatas_lock      _freelist_lock;
 
-    uint_fast32_t* _freelist;
-    uint_fast32_t _approx_freelist_length;
-    tatas_lock _freelist_lock;
+public:
+    LegacyZeroStack() {
+        _freelist[0] = 1;
+        for (uint_fast32_t i = 1; i < block_count - 1; i++) {
+            _freelist[i] = i + 1;
+        }
+        _freelist[block_count - 1] = 0;
+        _approx_freelist_length = block_count - 1;
+    };
 
     // https://github.com/iMax3060/zero/commit/f4f594b744687004f774690e0413663baf8502b0
     void use(std::array<uint_fast32_t, block_count>& pageIDs, std::array<std::atomic_flag, block_count>& pageUnused) {
@@ -50,22 +61,8 @@ namespace _legacy_zero_stack {
                 }
             }
         }
-    }
+    };
 
-    void init(const uint_fast32_t& block_count) {
-        _freelist = new uint_fast32_t[block_count];
-        _freelist[0] = 1;
-        for (uint_fast32_t i = 1; i < block_count - 1; i++) {
-            _freelist[i] = i + 1;
-        }
-        _freelist[block_count - 1] = 0;
-        _approx_freelist_length = block_count - 1;
-    }
-
-    void destroy() {
-        delete[] _freelist;
-    }
-
-}
+};
 
 #endif //ZERO_DETAILS_EVALUATION_LEGACY_ZERO_STACK_HPP
